@@ -13,7 +13,7 @@ window.CONFIG = {
   META_PIXEL_ID: '',
 
   /* Oferta */
-  PRECO: 'R$ 197,00', /* definido pela Mayara em 09/10/2026 */
+  PRECO: 'R$ 147,00', /* definido pela Mayara em 15/10/2026 (antes: R$ 197,00) */
   PARCELAS_TEXTO: 'ou parcelado no cartão (valor calculado pela plataforma)',
 
   /* Texto do FAQ "Como eu recebo?". Vazio = a pergunta não aparece. */

@@ -272,15 +272,18 @@
 
   /* ------------------------------ VÍDEOS DE DEPOIMENTO ------------------------------ */
   function depoPorId(id) { for (var i = 0; i < DEPOIMENTOS.length; i++) if (DEPOIMENTOS[i].id === id) return DEPOIMENTOS[i]; return null; }
-  /* Cartão compacto: miniatura + nome + frase literal. Ao tocar, abre o vídeo em tela cheia. */
-  function cartaoVideo(d, cls) {
-    if (!d) return '';
-    return '<button type="button" class="vcard ' + (cls || '') + '" data-video="' + esc(d.id) + '" aria-label="Assistir ao depoimento de ' + esc(d.nome) + '">' +
-      '<span class="vthumb"><img src="assets/video/' + esc(d.poster) + '" alt="" data-card="1" loading="lazy"><i class="vplay">' + icone('video') + '</i></span>' +
-      '<span class="vtxt"><b>' + esc(d.nome) + (d.antes ? ' · <small>' + esc(d.antes) + '</small>' : '') + '</b>' +
-      (d.frase ? '<q>' + esc(d.frase) + '</q>' : '') +
-      '<em>' + icone('play') + 'Assistir' + (d.dur ? ' · ' + esc(d.dur) : '') + '</em></span></button>';
+  /* Legenda sincronizada (legendas.js) e barra de progresso de um vídeo de depoimento */
+  function ligarLegendas(v, id, $leg, $prog) {
+    var cues = (typeof LEGENDAS !== 'undefined' && LEGENDAS[id]) || [], atual = -1;
+    v.addEventListener('timeupdate', function () {
+      var ct = v.currentTime, k = -1;
+      for (var i = 0; i < cues.length; i++) if (ct >= cues[i][0] && ct < cues[i][1] + .15) { k = i; break; }
+      if (k !== atual) { atual = k; $leg.innerHTML = k >= 0 ? '<span>' + esc(cues[k][2]) + '</span>' : ''; }
+      if (v.duration && $prog) $prog.style.width = (ct / v.duration * 100) + '%';
+    });
   }
+  /* Vídeo em tela cheia, aberto por um toque: já começa com som e legenda, sem botão de play.
+     Tocar no vídeo pausa e continua. Se o celular não deixar tocar com som, começa sem som e mostra "Toque para ouvir". */
   function abrirVideo(id) {
     var d = depoPorId(id);
     if (!d) return;
@@ -288,12 +291,27 @@
     var m = document.createElement('div');
     m.className = 'vmodal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-label', 'Depoimento de ' + d.nome);
     m.innerHTML = '<div class="vmodal-in"><button type="button" class="vfechar" aria-label="Fechar o vídeo">✕</button>' +
-      '<video src="assets/video/' + esc(d.video) + '" poster="assets/video/' + esc(d.poster) + '" controls playsinline autoplay preload="auto"></video>' +
+      '<div class="player player-modal"><video src="assets/video/' + esc(d.video) + '" poster="assets/video/' + esc(d.poster) + '" playsinline autoplay preload="auto"></video>' +
+      '<i class="pl-barra"><b></b></i><button type="button" class="pl-som" hidden>🔊 Toque para ouvir</button><p class="pl-legenda" aria-live="off"></p></div>' +
       '<p class="vlegenda"><b>' + esc(d.nome) + '</b>' + (d.antes ? ' · ' + esc(d.antes) : '') + '</p></div>';
     document.body.appendChild(m);
     document.body.classList.add('com-modal');
-    var v = m.querySelector('video');
-    function fechar() { try { v.pause(); } catch (e) {} m.remove(); document.body.classList.remove('com-modal'); document.removeEventListener('keydown', tecla); }
+    var v = m.querySelector('video'), $som = m.querySelector('.pl-som');
+    /* pausa o carrossel enquanto o vídeo em tela cheia toca; ele volta sozinho quando a tela cheia fecha */
+    document.querySelectorAll('video').forEach(function (x) { if (x !== v && !x.paused) x.pause(); });
+    ligarLegendas(v, d.id, m.querySelector('.pl-legenda'), m.querySelector('.pl-barra b'));
+    var p = v.play();
+    if (p && p.catch) p.catch(function () { v.muted = true; $som.hidden = false; v.play().catch(function () {}); });
+    $som.addEventListener('click', function (ev) { ev.stopPropagation(); v.muted = false; v.currentTime = 0; v.play().catch(function () {}); $som.hidden = true; });
+    m.querySelector('.player').addEventListener('click', function () {
+      if (!$som.hidden) { $som.click(); return; }
+      if (v.paused) v.play().catch(function () {}); else v.pause();
+    });
+    function fechar() {
+      try { v.pause(); } catch (e) {}
+      m.remove(); document.body.classList.remove('com-modal'); document.removeEventListener('keydown', tecla);
+      document.dispatchEvent(new Event('vmodal-fechou'));
+    }
     function tecla(ev) { if (ev.key === 'Escape') fechar(); }
     m.addEventListener('click', function (ev) { if (ev.target === m) fechar(); });
     m.querySelector('.vfechar').addEventListener('click', fechar);
@@ -507,15 +525,15 @@
     var d = t.depo ? depoPorId(t.depo) : null;
     if (d) {
       h += '<div class="teaser"><img src="assets/video/' + esc(d.poster) + '" alt="" data-card="1">' +
-        '<p><small>Na próxima tela</small><b>' + esc(d.gancho) + '</b></p><span class="teaser-play">' + icone('play') + '</span></div>';
+        '<p><small>Na próxima tela</small><b>' + esc(d.gancho) + '</b></p></div>';
     }
     h += '</div>';
     h += botaoFixo(t.btn || 'Continuar');
     return h;
   }
 
-  /* Tela do depoimento em vídeo: começa sozinho, sem som, com legenda (como nos Reels).
-     "Toque para ouvir" liga o som e volta para o começo. */
+  /* Tela do depoimento em vídeo: começa sozinho assim que a tela abre, sem som, com legenda (como nos Reels).
+     Não tem botão de play. "Toque para ouvir" liga o som e volta para o começo. */
   function telaVideo(t) {
     var d = depoPorId(t.depo);
     if (!d) return botaoFixo(t.btn || 'Continuar');
@@ -525,8 +543,7 @@
     h += '<div class="player" id="player"><video id="vid" src="assets/video/' + esc(d.video) + '" poster="assets/video/' + esc(d.poster) + '" playsinline muted autoplay preload="auto"></video>' +
       '<i class="pl-barra"><b id="pl-prog"></b></i>' +
       '<button type="button" class="pl-som" id="pl-som">🔊 Toque para ouvir</button>' +
-      '<p class="pl-legenda" id="pl-leg" aria-live="off"></p>' +
-      '<button type="button" class="pl-play" id="pl-play" aria-label="Assistir" hidden>' + icone('play') + '</button></div>';
+      '<p class="pl-legenda" id="pl-leg" aria-live="off"></p></div>';
     h += botaoFixo(t.btn || 'Continuar');
     return h;
   }
@@ -553,12 +570,9 @@
     function peso(d) { return (d.forca || 0) + (d.grupo === grupo ? 2 : 0) + (jaVisto(d) ? 0 : 1); }
     return DEPOIMENTOS.slice().sort(function (a, b) { return peso(b) - peso(a); });
   }
-  function depoimentosHTML(lista, n) {
+  function depoimentosVazios(n) {
     var h = '';
-    if (lista.length) lista.slice(0, n).forEach(function (d) { h += cartaoVideo(d, 'vcard-grande'); });
-    else if (PH) {
-      for (var i = 1; i <= n; i++) h += '<div class="depo depo-ph"><span>DEPOIMENTO ' + i + '</span><b>Aguardando vídeo autorizado</b><small>Adicionar em data.js → DEPOIMENTOS</small></div>';
-    }
+    if (PH) for (var i = 1; i <= n; i++) h += '<div class="depo depo-ph"><span>DEPOIMENTO ' + i + '</span><b>Aguardando vídeo autorizado</b><small>Adicionar em data.js → DEPOIMENTOS</small></div>';
     return h;
   }
 
@@ -573,7 +587,7 @@
   function telaProva(t) {
     var h = '<h1 class="tit-ins" tabindex="-1" data-foco>' + t.tit + '</h1><p class="sub">' + t.sub + '</p>';
     var vids = provaVideos();
-    h += '<div class="vlista">' + (vids.length ? vids.map(function (d) { return cartaoVideo(d, 'vcard-grande'); }).join('') : depoimentosHTML([], 3)) + '</div>';
+    h += vids.length ? carrosselHTML(vids, 'car-prova') : '<div class="vlista">' + depoimentosVazios(3) + '</div>';
     var tx = provaTextos();
     if (tx.length) h += '<div class="chat">' + tx.map(bolha).join('') + '</div>';
     return h + botaoFixo(t.btn);
@@ -747,7 +761,7 @@
     h += secCarrossel();
 
     /* H3 — mecanismo */
-    h += '<section class="sec mecanismo"><p class="selo">Do laboratório à primeira diária</p><ol class="mec-passos">' +
+    h += '<section class="sec mecanismo"><p class="selo">O caminho até a primeira diária</p><ol class="mec-passos">' +
       '<li>' + icone('lista') + '<div><b>Técnica</b><p>Aprender o processo de uma organizer profissional.</p></div></li>' +
       '<li>' + icone('casa') + '<div><b>Laboratório</b><p>Praticar na sua casa e fotografar o antes e o depois.</p></div></li>' +
       '<li>' + icone('dinheiro') + '<div><b>Primeira diária</b><p>Saber o valor do seu dia e oferecer o seu serviço.</p></div></li></ol>' +
@@ -814,41 +828,80 @@
   function reais(v) { var p = v.toFixed(2).split('.'); return 'R$ ' + p[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + p[1]; }
   function totalOferta() { return OFERTA_ITENS.reduce(function (t, x) { var b = x.b ? bonusPorId(x.b) : null; return t + (x.valor || (b && b.valor) || 0); }, 0); }
 
-  /* Carrossel de depoimentos: cartões grandes, que passam sozinhos e voltam ao começo */
+  /* Carrossel de depoimentos em vídeo (tela de provas e página de vendas).
+     O vídeo do meio começa sozinho, sem som e com legenda; quando acaba, passa para o próximo e volta ao começo.
+     Não tem botão de play. Tocar no vídeo abre em tela cheia, com som. */
   function secCarrossel() {
     var lista = depoimentosOrdenados().filter(function (d) { return (d.forca || 0) >= 2; });
     if (!lista.length) return '';
-    var h = '<section class="sec depos-sec"><p class="selo">O que as alunas dizem</p><h2 class="tit-sec">Veja quem já começou</h2>';
-    h += '<div class="carrossel" id="carrossel" aria-label="Depoimentos em vídeo">' + lista.map(function (d) {
-      return '<button type="button" class="slide" data-video="' + esc(d.id) + '" aria-label="Assistir ao depoimento de ' + esc(d.nome) + '">' +
-        '<span class="slide-img"><img src="assets/video/' + esc(d.poster) + '" alt="" loading="lazy" data-card="1"><i class="slide-play">' + icone('play') + '</i>' +
+    return '<section class="sec depos-sec"><p class="selo">O que as alunas dizem</p><h2 class="tit-sec">Veja quem já começou</h2>' +
+      carrosselHTML(lista, 'car-vendas') + '</section>';
+  }
+  function carrosselHTML(lista, id) {
+    var h = '<div class="carrossel' + (lista.length === 1 ? ' um' : '') + '" id="' + id + '" aria-label="Depoimentos em vídeo">' + lista.map(function (d) {
+      return '<button type="button" class="slide" data-video="' + esc(d.id) + '" aria-label="Ouvir o depoimento de ' + esc(d.nome) + '">' +
+        '<span class="slide-img"><video muted playsinline preload="none" poster="assets/video/' + esc(d.poster) + '" data-src="assets/video/' + esc(d.video) + '" data-depo="' + esc(d.id) + '"></video>' +
+        '<i class="pl-barra"><b></b></i><span class="slide-som">🔊 Toque para ouvir</span><p class="pl-legenda" aria-live="off"></p>' +
         (d.dur ? '<span class="slide-dur">' + esc(d.dur) + '</span>' : '') + '</span>' +
         '<b>' + esc(d.nome) + '</b>' + (d.antes ? '<small>' + esc(d.antes) + '</small>' : '') + (d.frase ? '<q>' + esc(d.frase) + '</q>' : '') + '</button>';
     }).join('') + '</div>';
-    h += '<div class="car-pontos" id="car-pontos">' + lista.map(function (d, i) { return '<button type="button" aria-label="Depoimento ' + (i + 1) + '" data-ir="' + i + '"' + (i ? '' : ' class="on"') + '></button>'; }).join('') + '</div>';
-    h += '<p class="car-dica">Toque no vídeo para assistir.</p></section>';
+    if (lista.length > 1) h += '<div class="car-pontos" id="' + id + '-pontos">' + lista.map(function (d, i) { return '<button type="button" aria-label="Depoimento ' + (i + 1) + '" data-ir="' + i + '"' + (i ? '' : ' class="on"') + '></button>'; }).join('') + '</div>';
     return h;
   }
-  function ligarCarrossel() {
-    var car = document.getElementById('carrossel'), pts = document.getElementById('car-pontos');
+  function ligarCarrossel(car) {
     if (!car) return function () {};
-    var slides = car.querySelectorAll('.slide'), atual = 0, pausa = 0;
+    var pts = document.getElementById(car.id + '-pontos');
+    var slides = car.querySelectorAll('.slide'), atual = 0, pausa = 0, naTela = false, semAutoplay = false;
+    function video(i) { return slides[i].querySelector('video'); }
+    slides.forEach(function (sl, i) {
+      var v = video(i);
+      ligarLegendas(v, v.dataset.depo, sl.querySelector('.pl-legenda'), sl.querySelector('.pl-barra b'));
+      v.addEventListener('ended', function () { if (i === atual && slides.length > 1) irPara(atual + 1); else { v.currentTime = 0; tocar(); } });
+      v.addEventListener('playing', function () { semAutoplay = false; });
+    });
+    /* toca só o vídeo do meio, e só quando o carrossel está na tela e não há vídeo aberto em tela cheia */
+    function tocar() {
+      var pode = naTela && !document.querySelector('.vmodal') && !document.hidden;
+      slides.forEach(function (sl, i) { var v = video(i); if ((i !== atual || !pode) && !v.paused) v.pause(); });
+      if (!pode) return;
+      var v = video(atual);
+      if (!v.getAttribute('src')) { v.preload = 'auto'; v.src = v.dataset.src; }
+      v.muted = true;
+      var p = v.play();
+      /* só conta como bloqueio quando o navegador recusa tocar sozinho (não quando a pessoa troca de vídeo no meio) */
+      if (p && p.catch) p.catch(function (e) { if (e && e.name === 'NotAllowedError') semAutoplay = true; });
+    }
     function irPara(i, suave) {
-      atual = (i + slides.length) % slides.length;
+      var novo = (i + slides.length) % slides.length;
+      if (novo !== atual) { try { video(novo).currentTime = 0; } catch (e) {} }
+      atual = novo;
       var sl = slides[atual];
       car.scrollTo({ left: sl.offsetLeft - (car.clientWidth - sl.offsetWidth) / 2, behavior: suave === false ? 'auto' : 'smooth' });
+      marcarPontos();
+      tocar();
     }
+    function marcarPontos() { if (pts) pts.querySelectorAll('button').forEach(function (b, i) { b.classList.toggle('on', i === atual); }); }
     function marcar() {
       var meio = car.scrollLeft + car.clientWidth / 2, k = 0, menor = 1e9;
       slides.forEach(function (sl, i) { var d = Math.abs(sl.offsetLeft + sl.offsetWidth / 2 - meio); if (d < menor) { menor = d; k = i; } });
-      atual = k;
-      pts.querySelectorAll('button').forEach(function (b, i) { b.classList.toggle('on', i === k); });
+      if (k !== atual) { try { video(k).currentTime = 0; } catch (e) {} atual = k; }
+      marcarPontos();
+      tocar();
     }
     car.addEventListener('scroll', function () { clearTimeout(car._t); car._t = setTimeout(marcar, 80); }, { passive: true });
     ['pointerdown', 'touchstart', 'wheel'].forEach(function (ev) { car.addEventListener(ev, function () { pausa = Date.now() + 8000; }, { passive: true }); });
-    pts.addEventListener('click', function (ev) { var b = ev.target.closest('[data-ir]'); if (b) { pausa = Date.now() + 8000; irPara(+b.dataset.ir); } });
-    var iv = setInterval(function () { if (Date.now() < pausa || document.querySelector('.vmodal')) return; irPara(atual + 1); }, 3500);
-    return function () { clearInterval(iv); };
+    if (pts) pts.addEventListener('click', function (ev) { var b = ev.target.closest('[data-ir]'); if (b) { pausa = Date.now() + 8000; irPara(+b.dataset.ir); } });
+    /* se o celular bloquear o vídeo automático (ex.: modo de economia de bateria), o carrossel passa sozinho a cada 3,5 s */
+    var iv = setInterval(function () { if (!semAutoplay || !naTela || Date.now() < pausa || document.querySelector('.vmodal') || slides.length < 2) return; irPara(atual + 1); }, 3500);
+    var obs = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { naTela = es[0].isIntersecting; tocar(); }, { threshold: .5 }) : null;
+    if (obs) obs.observe(car); else { naTela = true; tocar(); }
+    document.addEventListener('vmodal-fechou', tocar);
+    document.addEventListener('visibilitychange', tocar);
+    return function () {
+      clearInterval(iv); if (obs) obs.disconnect();
+      document.removeEventListener('vmodal-fechou', tocar); document.removeEventListener('visibilitychange', tocar);
+      slides.forEach(function (sl, i) { try { video(i).pause(); } catch (e) {} });
+    };
   }
   function bonusPorId(id) { for (var i = 0; i < BONUS.length; i++) if (BONUS[i].id === id) return BONUS[i]; return null; }
   function totalBonus() { return BONUS.reduce(function (t, b) { return t + (b.valor || 0); }, 0); }
@@ -909,7 +962,14 @@
   function descAula(k) {
     var a = AULAS[k], r = R || calcular(), comeco = aulaInicio(), paraVoce = PILARES[r.atencao].aula;
     var tag = a.n === comeco ? '<span class="tag">Comece por aqui</span>' : a.n === paraVoce ? '<span class="tag tag-sutil">Para você</span>' : '';
-    return '<div class="aula-desc-in" style="--cor:' + a.cor + '"><div class="aula-desc-top"><b>' + icone(a.ic) + 'Módulo ' + a.n + ' · ' + a.tit + '</b>' + tag + '</div><p>' + a.txt + '</p></div>';
+    return '<div class="aula-desc-in" style="--cor:' + a.cor + '"><div class="aula-desc-top"><b>' + icone(a.ic) + 'Módulo ' + a.n + ' · ' + a.tit + '</b>' + tag + '</div><p>' + a.txt + '</p>' +
+      (a.aulas ? '<ol class="aula-lista" start="' + numAula(k) + '">' + a.aulas.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ol>' : '') + '</div>';
+  }
+  /* número da primeira aula do módulo k (as aulas são numeradas de 1 a 14 no curso todo) */
+  function numAula(k) {
+    var n = 1;
+    for (var i = 0; i < k; i++) n += (AULAS[i].aulas || []).length;
+    return n;
   }
 
   function secBonus() {
@@ -1002,6 +1062,21 @@
     if (t.t === 'ins' || t.t === 'antesdepois' || t.t === 'prova') {
       if (seg) seg.addEventListener('click', avancar);
     }
+    /* Inserção com depoimento: tocar no aviso "Na próxima tela" também avança, e o vídeo já começa a baixar
+       para tocar sozinho assim que a próxima tela abrir */
+    if (t.t === 'ins' && t.depo) {
+      var tz = $app.querySelector('.teaser'), dp = depoPorId(t.depo);
+      if (tz) tz.addEventListener('click', avancar);
+      if (dp && !document.querySelector('link[data-pre="' + dp.id + '"]')) {
+        var lk = document.createElement('link');
+        lk.rel = 'prefetch'; lk.as = 'video'; lk.href = 'assets/video/' + dp.video; lk.setAttribute('data-pre', dp.id);
+        document.head.appendChild(lk);
+      }
+    }
+    if (t.t === 'prova') {
+      var pararProva = ligarCarrossel(document.getElementById('car-prova'));
+      limpeza = pararProva;
+    }
 
     if (t.t === 'video') ligarVideo(t);
 
@@ -1035,25 +1110,17 @@
     if (seg) seg.addEventListener('click', avancar);
     var v = document.getElementById('vid');
     if (!v) return;
-    var $som = document.getElementById('pl-som'), $leg = document.getElementById('pl-leg'), $prog = document.getElementById('pl-prog'),
-      $play = document.getElementById('pl-play'), $pl = document.getElementById('player');
-    var cues = (typeof LEGENDAS !== 'undefined' && LEGENDAS[t.depo]) || [], atual = -1, completo = false;
+    var $som = document.getElementById('pl-som'), $pl = document.getElementById('player'), completo = false;
+    ligarLegendas(v, t.depo, document.getElementById('pl-leg'), document.getElementById('pl-prog'));
     v.muted = true;
-    function tocar() { var p = v.play(); if (p && p.catch) p.catch(function () { $play.hidden = false; }); }
+    /* Sem botão de play: se o celular bloquear o vídeo automático (ex.: economia de bateria),
+       o "Toque para ouvir" continua na tela e começa o vídeo com som */
+    function tocar() { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     tocar();
     /* se a aba estava em segundo plano, tenta de novo quando ela voltar */
     function aoVoltar() { if (!document.hidden && v.paused && !v.ended && v.currentTime === 0) tocar(); }
     document.addEventListener('visibilitychange', aoVoltar);
-    v.addEventListener('timeupdate', function () {
-      var ct = v.currentTime, k = -1;
-      for (var i = 0; i < cues.length; i++) if (ct >= cues[i][0] && ct < cues[i][1] + .15) { k = i; break; }
-      if (k !== atual) { atual = k; $leg.innerHTML = k >= 0 ? '<span>' + esc(cues[k][2]) + '</span>' : ''; }
-      if (v.duration) $prog.style.width = (ct / v.duration * 100) + '%';
-    });
-    v.addEventListener('play', function () { $play.hidden = true; });
-    v.addEventListener('pause', function () { if (!v.ended) $play.hidden = false; });
     v.addEventListener('ended', function () {
-      $play.hidden = false; $play.classList.add('de-novo');
       if (!completo) { completo = true; track('video_completo', { video: t.depo }); }
     });
     $som.addEventListener('click', function (ev) {
@@ -1062,7 +1129,6 @@
       $som.hidden = true;
       track('video_som', { video: t.depo });
     });
-    $play.addEventListener('click', function (ev) { ev.stopPropagation(); if (v.ended) v.currentTime = 0; tocar(); });
     $pl.addEventListener('click', function () {
       if (!$som.hidden) { $som.click(); return; }
       if (v.paused) tocar(); else v.pause();
@@ -1214,14 +1280,14 @@
         track('aula_vista', { aula: +b.dataset.aula + 1 });
       });
     });
-    var pararCarrossel = ligarCarrossel();
+    var pararCarrossel = ligarCarrossel(document.getElementById('car-vendas'));
     limpeza = function () { $ctaFixo.hidden = true; pararCarrossel(); };
   }
 
   function irCheckout(origem) {
     track('checkout_click', { origem: origem, perfil: R && R.perfil });
     var preco = parseFloat(String(C.PRECO || '').replace(/[^\d,]/g, '').replace(',', '.')) || undefined;
-    fbq('track', 'InitiateCheckout', { value: preco, currency: 'BRL', content_name: 'Do Laboratorio a Primeira Diaria' });
+    fbq('track', 'InitiateCheckout', { value: preco, currency: 'BRL', content_name: 'Primeiros Passos da Personal Organizer' });
     var u = urlCheckout(origem);
     if (u) { window.location.href = u; return; }
     aviso('Checkout ainda não configurado (config.js → CHECKOUT_URL).');

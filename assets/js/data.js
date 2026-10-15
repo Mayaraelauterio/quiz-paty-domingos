@@ -17,14 +17,14 @@ const DESEMPATE_FORTE = ['mentalidade', 'execucao', 'tecnica'];
 
 const PILARES = {
   tecnica: {
-    nome: 'TÉCNICA', aula: 3,
+    nome: 'TÉCNICA', aula: 2,
     frase: 'Técnica é o método. E método se aprende.',
     atencao: 'Hoje você organiza do seu jeito, e por isso a bagunça volta. Falta o processo: analisar, planejar, categorizar e setorizar.',
     depe: 'Você já tem base: separa por tipo e dá um lugar para cada coisa.',
     cuidado: 'Faça o laboratório do Módulo 3 antes de qualquer cliente: é na prática que a técnica aparece.'
   },
   mentalidade: {
-    nome: 'MENTALIDADE', aula: 2,
+    nome: 'MENTALIDADE', aula: 4,
     frase: 'Mentalidade é o que te sustenta.',
     atencao: 'Você sabe fazer, mas ainda não se vê cobrando por isso. A tendência é trabalhar de graça ou aceitar “um agrado”.',
     depe: 'Você já entende que o seu trabalho tem valor.',
@@ -489,7 +489,7 @@ const TELAS = [
     tit: 'Ninguém começa pronta. Nem eu comecei.',
     pontos: [
       { i: 'mensagem', t: 'Já fiquei muda numa visita, tremendo. Até hoje sinto frio na barriga antes de um projeto.' },
-      { i: 'lista', t: 'Por isso o curso começa pelo <b>laboratório</b>: você treina na sua casa antes de entrar na casa de uma cliente.' },
+      { i: 'lista', t: 'Por isso o curso tem o <b>laboratório</b>: você treina na sua casa antes de entrar na casa de uma cliente.' },
       { i: 'coracao', t: '“Você não precisa chegar pronta. Você só precisa chegar disposta.”' }
     ],
     btn: 'Continuar' },
@@ -520,7 +520,7 @@ const TELAS = [
   { id: 'I8', t: 'prova',
     show: () => DEPOIMENTOS.length > 0 || (window.CONFIG && CONFIG.MOSTRAR_ESPACOS_RESERVADOS),
     tit: 'Não é teoria. É o que as minhas alunas vivem.',
-    sub: 'Toque para assistir.',
+    sub: 'Toque no vídeo para ouvir.',
     btn: 'Montar o meu plano' },
 
   { id: 'CAPTURA', t: 'captura',
@@ -539,45 +539,46 @@ const TELAS = [
 /* --------------------------------------------------------------------------
    PÁGINA DE VENDAS
    -------------------------------------------------------------------------- */
-/* Os 8 módulos do produto (definidos pela Mayara em 09/10/2026).
+/* Produto principal: "Primeiros Passos da Personal Organizer", 14 aulas em 4 módulos recortadas do Método Organizadas
+   (ficha do low ticket de 14/10/2026). Os títulos das aulas são os da ficha; os dois "Tira-dúvidas" ganharam nome legível
+   e a aula 14 aparece sem os valores ("R$ 3 a 5 mil"), para não soar como promessa de renda.
    [PENDENTE: a Paty e o Hélio revisam as descrições curtas de cada módulo] */
 const PRODUTO = {
-  nome: 'Do Laboratório à Primeira Diária',
-  lead: '<b>8 módulos de aulas didáticas e práticas</b>: as técnicas fundamentais para trabalhar como Organizadora de Casa, oferecer os seus serviços e dar os primeiros passos para conquistar as suas primeiras diárias remuneradas.'
+  nome: 'Primeiros Passos da Personal Organizer',
+  lead: '<b>14 aulas em 4 módulos</b>, escolhidas do Método Organizadas: o que faz uma personal organizer, os fundamentos da técnica, o laboratório e quanto cobrar pela sua primeira diária.'
 };
 const AULAS = [
-  { n: 1, cor: '#a8842f', ic: 'estrela', tit: 'Bem-vindas, Organizadas!', txt: 'Orientações iniciais e o caminho da sua formação na nova profissão.' },
-  { n: 2, cor: '#1d2f55', ic: 'casa', tit: 'Entendendo a Profissão', txt: 'Áreas de atuação, rotina, ética, gestão de tempo e manutenção.' },
-  { n: 3, cor: '#b4532a', ic: 'lista', tit: 'Laboratório – Vamos começar, Organizadas!', curto: 'Laboratório', txt: 'Como planejar, executar e entregar o seu primeiro laboratório, na sua casa.' },
-  { n: 4, cor: '#1f6f50', ic: 'caixa', tit: 'Cozinha', txt: 'Como organizar a cozinha para facilitar a rotina da casa.' },
-  { n: 5, cor: '#4b2a7b', ic: 'gaveta', tit: 'Despensa', txt: 'Como organizar a despensa por categorias, com tudo à vista.' },
-  { n: 6, cor: '#0f5c63', ic: 'vassoura', tit: 'Lavanderia', txt: 'Como organizar a lavanderia e os produtos do dia a dia.' },
-  { n: 7, cor: '#7a1f3a', ic: 'camisa', tit: 'Armário e Closet', txt: 'Como organizar armários e closets para a ordem durar.' },
-  { n: 8, cor: '#1e3b31', ic: 'coracao', tit: 'Banheiro', txt: 'Como organizar o banheiro, as gavetas e os armários.' }
+  { n: 1, cor: '#a8842f', ic: 'estrela', tit: 'A profissão',
+    txt: 'Se ser personal organizer faz sentido para você, o que essa profissão faz, onde ela atua e como ela é de verdade, sem romantizar.',
+    aulas: ['Ser P.O. faz sentido para você?', 'O que faz uma Personal Organizer e suas áreas de atuação', 'Romantização da profissão', 'Personal Organizer limpa ou não limpa?'] },
+  { n: 2, cor: '#1d2f55', ic: 'gaveta', tit: 'Os fundamentos da técnica', curto: 'Fundamentos',
+    txt: 'A base do trabalho de uma organizer: conhecer o armário, categorizar, separar desapego de descarte e usar o gabarito.',
+    aulas: ['Conhecendo o armário', 'O que é categorização', 'Diferença entre desapego e descarte', 'O que é gabarito'] },
+  { n: 3, cor: '#b4532a', ic: 'lista', tit: 'O caminho',
+    txt: 'O laboratório, onde você pratica antes da primeira cliente, e o que fazer primeiro para iniciar a sua carreira.',
+    aulas: ['O que é laboratório?', 'Iniciando a sua carreira e o que fazer primeiro'] },
+  { n: 4, cor: '#1f6f50', ic: 'dinheiro', tit: 'Suas primeiras diárias', curto: 'Primeiras diárias',
+    txt: 'Quanto cobrar pela sua diária, as dúvidas mais comuns respondidas pela Paty e o passo a passo depois do primeiro serviço.',
+    aulas: ['Quanto cobrar pela sua diária', 'Tira-dúvidas com a Paty (parte 1)', 'Tira-dúvidas com a Paty (parte 2)', 'Do primeiro serviço aos próximos passos'] }
 ];
 /* "Comece por aqui" fica sempre no Módulo 1 (ver aulaInicio em app.js). */
 
 const BONUS = [
-  /* valor: preço de referência riscado, definido pela Mayara em 09/10/2026 */
-  { id: 'B1', ic: 'gaveta', valor: 297, cor: '#7a1f3a', tit: 'Bônus 1 — Dobras de Lingerie',
-    txt: 'Técnicas para dobrar e organizar calcinhas, sutiãs, meias e outras peças íntimas, aproveitando melhor o espaço das gavetas.' },
-  { id: 'B2', ic: 'chama', valor: 297, cor: '#b4532a', tit: 'Bônus 2 — Dobras de Roupas de Academia',
-    txt: 'Aprenda a dobrar leggings, tops, shorts, camisetas e outras roupas fitness de maneira prática e padronizada.' },
-  { id: 'B3', ic: 'camisa', valor: 297, cor: '#1d2f55', tit: 'Bônus 3 — Dobras de Roupas Masculinas',
-    txt: 'Técnicas para organizar camisetas, camisas, bermudas, calças e outras peças do guarda-roupa masculino.' },
-  { id: 'B4', ic: 'estrela', valor: 297, cor: '#a8842f', tit: 'Bônus 4 — Organização de Bijuterias',
+  /* valor: preço de referência riscado. Bijuterias e Packs: valores da Mayara (09/10/2026).
+     Gestão da Carreira e o curso (em OFERTA_ITENS): escolhidos pelo Claude a pedido da Mayara (15/10/2026). [CONFIRMAR com a Paty] */
+  { id: 'B1', ic: 'calculadora', valor: 397, cor: '#1d2f55', tit: 'Bônus 1 — Gestão da Carreira da Personal Organizer',
+    txt: 'Como gerenciar o seu negócio, captar mais clientes, precificar o seu serviço, o passo a passo para crescer depois das primeiras diárias e as despesas de viagem.' },
+  { id: 'B2', ic: 'estrela', valor: 297, cor: '#a8842f', tit: 'Bônus 2 — Organização de Bijuterias',
     txt: 'Dicas para organizar brincos, colares, pulseiras e anéis, evitando peças emaranhadas e facilitando a visualização.' },
-  { id: 'B5', ic: 'caixa', valor: 197, cor: '#1f6f50', tit: 'Bônus 5 — Packs de Organização para Otimizar Espaços',
-    txt: 'Para aproveitar melhor cada espaço da casa.' }
+  { id: 'B3', ic: 'caixa', valor: 197, cor: '#1f6f50', tit: 'Bônus 3 — Packs de Organização para Otimizar Espaços',
+    txt: 'Os organizadores que ajudam a aproveitar melhor cada espaço da casa.' }
 ];
 
 const OFERTA_ITENS = [
-  { t: '8 módulos de aulas didáticas e práticas, com 40 aulas ao todo', valor: 1197 },
-  { t: 'Dobras de Lingerie', b: 'B1' },
-  { t: 'Dobras de Roupas de Academia', b: 'B2' },
-  { t: 'Dobras de Roupas Masculinas', b: 'B3' },
-  { t: 'Organização de Bijuterias', b: 'B4' },
-  { t: 'Packs de Organização para Otimizar Espaços', b: 'B5' }
+  { t: 'Primeiros Passos da Personal Organizer: 14 aulas em 4 módulos', valor: 497 },
+  { t: 'Gestão da Carreira da Personal Organizer', b: 'B1' },
+  { t: 'Organização de Bijuterias', b: 'B2' },
+  { t: 'Packs de Organização para Otimizar Espaços', b: 'B3' }
 ];
 
 const AUTORIDADE = [
