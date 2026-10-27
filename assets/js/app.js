@@ -454,6 +454,8 @@
     return h;
   }
 
+  /* [Ajuste 27/10/2026] De volta a uma tela só (capa + idade), como era antes de testarmos a versão
+     em 2 telas: só a headline e a subheadline mudaram (ver data.js). */
   function telaCapa(t) {
     var h = '<section class="capa">';
     h += '<div class="autora"><img src="assets/img/paty-avatar.jpg" alt="Paty Domingos" class="avatar" data-card="1">' +

@@ -169,10 +169,12 @@ const casada = A => is(A, 'P0', 0);
 const TELAS = [
 
   /* ---------- B. Abertura e genéricas ---------- */
+  /* [Ajuste 27/10/2026, pedido da Mayara] Capa e idade voltaram a ser uma tela só, como era antes
+     (a pessoa escolhe a idade e já avança, sem botão separado) — só a headline e a subheadline mudaram. */
   { id: 'G1', t: 'capa',
     selo: 'Personal organizer há 12 anos',
-    tit: 'Você já organiza sua casa de graça, e tem mulher cobrando de R$&nbsp;300 a R$&nbsp;600 por dia para fazer isso.',
-    sub: 'Faça o teste e descubra se essa pode ser a sua nova profissão, e quanto o seu dia de trabalho pode valer.',
+    tit: 'Você já organiza sua casa. E se ganhasse por isso?',
+    sub: 'Faça o teste e descubra se essa profissão combina com você.',
     tempo: 'Leva uns 3 minutos.',
     q: 'Para começar, qual é a sua idade?',
     o: [ { txt: '18 a 29 anos', e: '🌱', img: 'idade-1.jpg' },
