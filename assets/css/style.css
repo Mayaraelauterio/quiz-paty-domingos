@@ -59,6 +59,13 @@ body.modo-resultado .barra { display: none; }
 /* ---------------- Coluna ---------------- */
 .app { max-width: var(--col); margin: 0 auto; padding: 20px 16px 0; }
 .tela { animation: entra .3s ease both; }
+
+/* Perguntas (tela-q, tela-e, tela-m): antes ficavam coladas no topo, com um vão vazio embaixo.
+   Agora o bloco da pergunta fica centralizado no espaço livre entre o topo e o botão (quando há botão). */
+.app.tela-q .tela, .app.tela-e .tela, .app.tela-m .tela {
+  min-height: calc(100vh - 60px); display: flex; flex-direction: column;
+}
+.corpo-pergunta { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
 @keyframes entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tela { animation: none; } .barra i, .trilho i { transition: none !important; } }
 

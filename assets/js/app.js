@@ -215,7 +215,7 @@
   }
 
   /* ------------------------------ ENVIO DO LEAD ------------------------------ */
-  var FORA_DO_CRM = ['P3D', 'P3X', 'P3C', 'P3O', 'P3S', 'P4']; /* renda atual e filhos ficam só no navegador */
+  var FORA_DO_CRM = ['P0', 'P3D', 'P3X', 'P3C', 'P3O', 'P3S', 'P4']; /* estado civil, renda atual e filhos ficam só no navegador */
   function payload() {
     var r = R || calcular();
     var respostas = {};
@@ -475,7 +475,8 @@
   }
 
   function telaPergunta(t, multi) {
-    var h = cabecalhoPergunta(t);
+    var h = '<div class="corpo-pergunta">';
+    h += cabecalhoPergunta(t);
     if (multi) h += '<p class="sub sub-multi">Pode marcar mais de uma.</p>';
     h += '<div class="opcoes' + (multi ? ' multi' : '') + '" role="' + (multi ? 'group' : 'radiogroup') + '">';
     t.o.forEach(function (o, i) {
@@ -485,7 +486,7 @@
         '<span class="e" aria-hidden="true">' + o.e + '</span><span class="t">' + fill(o.txt) + '</span>' +
         (multi ? '<span class="check" aria-hidden="true"></span>' : '') + '</button>';
     });
-    h += '</div>';
+    h += '</div></div>';
     if (multi) h += botaoFixo('Continuar', !sel(A, t.id).length);
     return h;
   }

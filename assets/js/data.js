@@ -180,10 +180,10 @@ const TELAS = [
          { txt: '40 a 49 anos', e: '🌻', img: 'idade-3.jpg' },
          { txt: '50 anos ou mais', e: '👑', img: 'idade-4.jpg' } ] },
 
-  /* Duas genéricas depois da idade (v1.3): estado civil e filhos. Só personalizam o texto; não vão para o CRM nem para o lead score. */
-  { id: 'P0', t: 'q', q: 'Você é casada?',
-    o: [ { txt: 'Sim, sou casada (ou moro junto)', e: '💍' }, { txt: 'Não, sou solteira', e: '🌸' }, { txt: 'Sou divorciada ou viúva', e: '🕊️' } ] },
-
+  /* Genérica depois da idade (v1.3): filhos. Só personaliza o texto; não vai para o CRM nem para o lead score.
+     [Ajuste 27/10/2026] "Você é casada?" (P0) saiu daqui: no relatório de funil ela sozinha derrubava 17 pontos
+     logo na 2ª pergunta, e o único uso dela é uma palavra (marido/família) numa opção da P3C, só para quem é
+     dona de casa. P0 foi para perto da P3C, só para esse grupo — ver mais abaixo. */
   { id: 'P4', t: 'q', q: 'Você tem filhos?',
     o: [ { txt: 'Não', e: '🙋‍♀️' }, { txt: 'Sim, pequenos (até 10 anos)', e: '🧒' }, { txt: 'Sim, maiores de 10 anos', e: '👧' } ] },
 
@@ -208,6 +208,9 @@ const TELAS = [
   { id: 'P3X', t: 'q', show: A => ehCasa(A) && foraBrasil(A),
     q: 'Você sente que o seu dia de trabalho vale mais do que te pagam?',
     o: [ { txt: 'Sim, muito mais', e: '💯' }, { txt: 'Um pouco mais', e: '🤏' }, { txt: 'Acho que me pagam o justo', e: '⚖️' } ] },
+  /* [Ajuste 27/10/2026] P0 entra só aqui, perto de quem ela realmente personaliza (ver comentário acima da P4). */
+  { id: 'P0', t: 'q', show: A => ehDona(A), q: 'Você é casada?',
+    o: [ { txt: 'Sim, sou casada (ou moro junto)', e: '💍' }, { txt: 'Não, sou solteira', e: '🌸' }, { txt: 'Sou divorciada ou viúva', e: '🕊️' } ] },
   { id: 'P3C', t: 'q', show: A => ehDona(A),
     q: 'Hoje você tem um dinheiro que é só seu?',
     o: [ { txt: A => casada(A) ? 'Não, dependo do meu marido' : 'Não, dependo da minha família', e: '🙁' }, { txt: 'Faço uns bicos de vez em quando', e: '🧶' },
@@ -248,10 +251,13 @@ const TELAS = [
               { when: A => is(A, 'P6', 1), html: 'Você já ajudou alguém de favor. Esse foi o seu primeiro trabalho de organizer, só que sem cobrar.' },
               { when: A => is(A, 'P6', 2), html: 'Você adoraria ajudar alguém a organizar. Essa vontade já é um começo.' },
               { when: A => is(A, 'P6', 3), html: 'Você disse que mal dá conta da sua casa. Calma: eu também era assim.' } ],
-    depo: 'silvia',
-    btn: 'Assistir ao depoimento' },
-
-  { id: 'V1', t: 'video', depo: 'silvia', btn: 'Quero descobrir o meu perfil' },
+    btn: 'Quero descobrir o meu perfil' },
+    /* [Ajuste 27/10/2026] Esta era a maior queda do funil: 68,2% → 49,0% (-19 pontos), bem no 1º vídeo de
+       depoimento (V1), pedido cedo demais, antes de a pessoa receber qualquer coisa personalizada. Nas
+       próximas inserções com vídeo (I2/V2 etc.), a mesma queda cai para 5 pontos ou menos — a pessoa já está
+       mais investida. Por isso o vídeo da Silvia saiu daqui (ela continua disponível na tela de provas, S37,
+       que sorteia pelos depoimentos com mais peso). Se quiser reintroduzir este vídeo aqui, dá para testar
+       A/B contra esta versão sem vídeo. */
 
   /* ---------- C. Os 3 pilares ---------- */
   /* TÉCNICA */
